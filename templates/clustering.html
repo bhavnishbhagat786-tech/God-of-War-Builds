@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Armour Clustering | God of War</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #101419;
+            color: #f3f5f7;
+            font-family: Arial, sans-serif;
+        }
+        h1 { color: #d6b36a; }
+        .subtitle { color: #aab4bf; }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin: 25px 0;
+        }
+        .card, .panel {
+            background: #1b222a;
+            border: 1px solid #39434e;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .card h3 { color: #d6b36a; margin-top: 0; }
+        .value { font-size: 30px; font-weight: bold; }
+        .panels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .chart-box { height: 320px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #39434e;
+            text-align: left;
+        }
+        th { color: #d6b36a; }
+        .table-wrap { overflow-x: auto; }
+        .note { color: #aab4bf; font-size: 14px; }
+        a { color: #d6b36a; }
+        @media (max-width: 600px) {
+            body { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <a href="/">← Back to Home</a>
+
+    <h1>ARMOUR CLUSTER ANALYSIS</h1>
+    <p class="subtitle">God of War Ragnarök · Unsupervised Machine Learning</p>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Cluster 0</h3>
+            <div class="value" id="count0">—</div>
+            <p>Strength + Vitality focused</p>
+        </div>
+        <div class="card">
+            <h3>Cluster 1</h3>
+            <div class="value" id="count1">—</div>
+            <p>Defence focused</p>
+        </div>
+        <div class="card">
+            <h3>Cluster 2</h3>
+            <div class="value" id="count2">—</div>
+            <p>Strength + Runic focused</p>
+        </div>
+    </div>
+
+    <div class="panels">
+        <div class="panel">
+            <h2>Average Stats by Cluster</h2>
+            <div class="chart-box"><canvas id="statsChart"></canvas></div>
+        </div>
+        <div class="panel">
+            <h2>Armour Count</h2>
+            <div class="chart-box"><canvas id="countChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:20px;">
+        <h2>Armour Classification</h2>
+        <p class="note">Cluster numbers are machine-learning labels, not rankings.</p>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Armour</th>
+                        <th>Strength</th>
+                        <th>Defence</th>
+                        <th>Runic</th>
+                        <th>Vitality</th>
+                        <th>Cluster</th>
+                    </tr>
+                </thead>
+                <tbody id="armourRows">
+                    <tr><td colspan="6">Loading armour data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadClustering() {
+            const rows = document.getElementById("armourRows");
+
+            try {
+                const response = await fetch("/api/clustering");
+
+                if (!response.ok) {
+                    throw new Error("API returned HTTP " + response.status);
+                }
+
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error);
+
+                const armours = data.armours;
+                const stats = data.statistics;
+                const counts = data.counts;
+
+                [0, 1, 2].forEach(id => {
+                    document.getElementById("count" + id).textContent = counts[id] ?? 0;
+                });
+
+                rows.innerHTML = "";
+
+                armours.forEach(item => {
+                    const tr = document.createElement("tr");
+
+                    [
+                        item.Title,
+                        item.Strength,
+                        item.Defence,
+                        item.Runic,
+                        item.Vitality,
+                        item.Cluster
+                    ].forEach(value => {
+                        const td = document.createElement("td");
+                        td.textContent = value ?? "";
+                        tr.appendChild(td);
+                    });
+
+                    rows.appendChild(tr);
+                });
+
+                const labels = ["Strength", "Defence", "Runic", "Vitality", "Cooldown", "Luck"];
+
+                new Chart(document.getElementById("statsChart"), {
+                    type: "bar",
+                    data: {
+                        labels,
+                        datasets: [0, 1, 2].map((id, index) => ({
+                            label: "Cluster " + id,
+                            data: labels.map(stat => stats[id][stat]),
+                            backgroundColor: ["#c89b4b", "#5b91c9", "#a76bd1"][index]
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, ticks: { color: "#eee" }, grid: { color: "#39434e" } },
+                            x: { ticks: { color: "#eee" }, grid: { color: "#39434e" } }
+                        },
+                        plugins: { legend: { labels: { color: "#eee" } } }
+                    }
+                });
+
+                new Chart(document.getElementById("countChart"), {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Cluster 0", "Cluster 1", "Cluster 2"],
+                        datasets: [{
+                            data: [counts[0] || 0, counts[1] || 0, counts[2] || 0],
+                            backgroundColor: ["#c89b4b", "#5b91c9", "#a76bd1"]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: "#eee" } } }
+                    }
+                });
+
+            } catch (error) {
+                rows.innerHTML = "";
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 6;
+                td.textContent = "Could not load clustering data: " + error.message;
+                tr.appendChild(td);
+                rows.appendChild(tr);
+            }
+        }
+
+        loadClustering();
+    </script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Pen Tracking</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px;
+            background: #101114;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            color: #e7bd58;
+        }
+
+        .panel {
+            max-width: 750px;
+            margin: 25px auto;
+            padding: 20px;
+            background: #1c1d22;
+            border: 1px solid #66532b;
+            border-radius: 12px;
+        }
+
+        .camera-box {
+            position: relative;
+            width: 100%;
+            background: black;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        video {
+            display: block;
+            width: 100%;
+            transform: scaleX(-1);
+        }
+
+        canvas {
+            display: none;
+        }
+
+        button {
+            margin: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #start {
+            background: #d6a936;
+        }
+
+        #stop {
+            background: #bd4545;
+            color: white;
+        }
+
+        #status {
+            color: #e7bd58;
+            margin-top: 18px;
+        }
+
+        #direction {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px;
+        }
+
+        .note {
+            color: #b9b9b9;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>⚔️ Golden Pen Tracking</h1>
+
+    <div class="panel">
+
+        <p class="note">
+            Camera-based pen detection test for the
+            God of War Build Recommendation System.
+        </p>
+
+        <div class="camera-box">
+            <video id="video" autoplay playsinline muted></video>
+        </div>
+
+        <canvas id="canvas"></canvas>
+
+        <button id="start">Enable Camera</button>
+        <button id="stop">Stop Camera</button>
+
+        <h3 id="status">Camera is OFF</h3>
+
+        <div id="direction">Waiting for pen...</div>
+
+        <p class="note">
+            Hold your golden pen in front of the camera.
+            Move it slowly left, right, up and down.
+        </p>
+
+    </div>
+
+    <script src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const statusText = document.getElementById("status");
+        const directionText = document.getElementById("direction");
+
+        let stream = null;
+        let timer = null;
+        let running = false;
+        let previousPoint = null;
+        let lastDirectionTime = 0;
+
+        const startButton = document.getElementById("start");
+        const stopButton = document.getElementById("stop");
+
+        startButton.addEventListener("click", startCamera);
+        stopButton.addEventListener("click", stopCamera);
+
+        async function startCamera() {
+            try {
+                if (typeof cv === "undefined" || !cv.Mat) {
+                    statusText.textContent =
+                        "OpenCV is loading. Wait a few seconds and retry.";
+                    return;
+                }
+
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: "user",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                });
+
+                video.srcObject = stream;
+                await video.play();
+
+                canvas.width = 320;
+                canvas.height = 240;
+
+                running = true;
+                previousPoint = null;
+
+                statusText.textContent = "Camera ON — searching for golden pen";
+                timer = setInterval(trackPen, 150);
+
+            } catch (error) {
+                statusText.textContent =
+                    "Camera error: " + error.message;
+            }
+        }
+
+        function trackPen() {
+            if (!running || video.readyState < 2) return;
+
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const frame = ctx.getImageData(
+                0, 0, canvas.width, canvas.height
+            );
+
+            const src = cv.matFromImageData(frame);
+            const hsv = new cv.Mat();
+            const mask = new cv.Mat();
+            const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+
+            cv.cvtColor(src, hsv, cv.COLOR_RGBA2RGB);
+            cv.cvtColor(hsv, hsv, cv.COLOR_RGB2HSV);
+
+            // Initial gold-colour range.
+            // We may need to adjust this for your pen and lighting.
+            const lowerGold = new cv.Mat(
+                hsv.rows, hsv.cols, hsv.type(),
+                [12, 65, 65, 0]
+            );
+
+            const upperGold = new cv.Mat(
+                hsv.rows, hsv.cols, hsv.type(),
+                [42, 255, 255, 255]
+            );
+
+            cv.inRange(hsv, lowerGold, upperGold, mask);
+
+            cv.morphologyEx(
+                mask, mask, cv.MORPH_OPEN, kernel
+            );
+
+            const contours = new cv.MatVector();
+            const hierarchy = new cv.Mat();
+
+            cv.findContours(
+                mask,
+                contours,
+                hierarchy,
+                cv.RETR_EXTERNAL,
+                cv.CHAIN_APPROX_SIMPLE
+            );
+
+            let bestContour = -1;
+            let largestArea = 0;
+
+            for (let i = 0; i < contours.size(); i++) {
+                const contour = contours.get(i);
+                const area = cv.contourArea(contour);
+
+                if (area > largestArea) {
+                    largestArea = area;
+                    bestContour = i;
+                }
+
+                contour.delete();
+            }
+
+            if (bestContour !== -1 && largestArea > 35) {
+                const contour = contours.get(bestContour);
+                const moments = cv.moments(contour);
+
+                if (moments.m00 > 0) {
+                    const x = moments.m10 / moments.m00;
+                    const y = moments.m01 / moments.m00;
+
+                    detectDirection(x, y);
+
+                    statusText.textContent =
+                        "Golden-colour object detected";
+                }
+
+                contour.delete();
+            } else {
+                statusText.textContent =
+                    "Searching... move the pen into view";
+                directionText.textContent = "No pen detected";
+                previousPoint = null;
+            }
+
+            src.delete();
+            hsv.delete();
+            mask.delete();
+            kernel.delete();
+            lowerGold.delete();
+            upperGold.delete();
+            contours.delete();
+            hierarchy.delete();
+        }
+
+        function detectDirection(x, y) {
+            if (!previousPoint) {
+                previousPoint = { x, y };
+                directionText.textContent = "Pen detected ✓";
+                return;
+            }
+
+            const dx = x - previousPoint.x;
+            const dy = y - previousPoint.y;
+
+            const threshold = 12;
+            let direction = "Pen detected — hold steady";
+
+            if (Math.abs(dx) > threshold ||
+                Math.abs(dy) > threshold) {
+
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    direction = dx > 0 ? "LEFT ←" : "RIGHT →";
+                } else {
+                    direction = dy > 0 ? "DOWN ↓" : "UP ↑";
+                }
+
+                // Ignore tiny, rapid direction changes.
+                const now = Date.now();
+
+                if (now - lastDirectionTime > 250) {
+                    directionText.textContent = direction;
+                    lastDirectionTime = now;
+                }
+            }
+
+            previousPoint = { x, y };
+        }
+
+        function stopCamera() {
+            running = false;
+
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            video.srcObject = null;
+            previousPoint = null;
+
+            statusText.textContent = "Camera is OFF";
+            directionText.textContent = "Tracking stopped";
+        }
+
+        window.addEventListener("beforeunload", stopCamera);
+    </script>
+
+</body>
+</html>
+```

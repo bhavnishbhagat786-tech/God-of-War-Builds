@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Equipment Frequency | God of War</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #101214;
+            color: #f1f1f1;
+            font-family: Arial, sans-serif;
+            padding: 25px;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 35px;
+            padding: 30px 15px;
+            border-bottom: 2px solid #b58a45;
+        }
+
+        header h1 {
+            color: #d7ad63;
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        header p {
+            color: #bbb;
+            line-height: 1.6;
+        }
+
+        .summary {
+            background: #1b1f22;
+            border: 1px solid #414141;
+            border-left: 4px solid #d7ad63;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .summary h2 {
+            color: #d7ad63;
+            margin-bottom: 10px;
+        }
+
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .categories button {
+            padding: 11px 16px;
+            background: #25292c;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .categories button:hover,
+        .categories button.active {
+            background: #b58a45;
+            color: #111;
+        }
+
+        .panel {
+            background: #1b1f22;
+            border: 1px solid #383838;
+            border-radius: 10px;
+            padding: 22px;
+            margin-bottom: 25px;
+        }
+
+        .panel h2 {
+            color: #d7ad63;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 380px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 13px;
+            border-bottom: 1px solid #383838;
+        }
+
+        th {
+            background: #292d30;
+            color: #d7ad63;
+        }
+
+        tr:hover {
+            background: #272b2e;
+        }
+
+        .status {
+            color: #bbb;
+            margin-bottom: 15px;
+        }
+
+        .back {
+            display: inline-block;
+            color: #d7ad63;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+
+        .back:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            header h1 {
+                font-size: 25px;
+            }
+
+            .panel {
+                padding: 12px;
+                overflow-x: auto;
+            }
+
+            .chart-container {
+                height: 320px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <a class="back" href="/">← Back to Home</a>
+
+    <header>
+        <h1>GOD OF WAR RAGNARÖK</h1>
+        <p>Equipment Selection Frequency Analysis</p>
+        <p>Discover which equipment appears most often in recommended builds.</p>
+    </header>
+
+    <div class="summary">
+        <h2>Equipment Insights</h2>
+        <p>
+            This dashboard counts how frequently each equipment item appears
+            in the recommendations stored in your database.
+        </p>
+    </div>
+
+    <div class="categories" id="categories"></div>
+
+    <div class="panel">
+        <h2 id="chartTitle">Most Frequently Recommended Equipment</h2>
+        <p class="status" id="status">Loading equipment data...</p>
+
+        <div class="chart-container">
+            <canvas id="frequencyChart"></canvas>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2 id="tableTitle">Equipment Frequency Table</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Equipment</th>
+                    <th>Recommendation Count</th>
+                </tr>
+            </thead>
+
+            <tbody id="frequencyTable">
+                <tr>
+                    <td colspan="3">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    const categoryNames = {
+        Chest: "Chest Armour",
+        Wrist: "Wrist Armour",
+        Waist: "Waist Armour",
+        Axe: "Leviathan Axe",
+        Blades: "Blades of Chaos",
+        Spear: "Draupnir Spear",
+        Shield: "Shield",
+        Rond: "Shield Rond",
+        Relic: "Relic"
+    };
+
+    let frequencyData = {};
+    let selectedCategory = "Chest";
+    let frequencyChart = null;
+
+    async function loadFrequencyData() {
+        const status = document.getElementById("status");
+
+        try {
+            const response = await fetch("/api/equipment-frequency");
+
+            if (!response.ok) {
+                throw new Error("API returned status " + response.status);
+            }
+
+            frequencyData = await response.json();
+
+            if (frequencyData.error) {
+                throw new Error(frequencyData.error);
+            }
+
+            createCategoryButtons();
+
+            const availableCategories = Object.keys(frequencyData);
+
+            if (availableCategories.length === 0) {
+                status.textContent = "No equipment data available.";
+                return;
+            }
+
+            if (!availableCategories.includes(selectedCategory)) {
+                selectedCategory = availableCategories[0];
+            }
+
+            showCategory(selectedCategory);
+
+        } catch (error) {
+            console.error(error);
+            status.textContent =
+                "Unable to load equipment data. Check the Flask server and API.";
+        }
+    }
+
+    function createCategoryButtons() {
+        const container = document.getElementById("categories");
+        container.innerHTML = "";
+
+        Object.keys(frequencyData).forEach(category => {
+            const button = document.createElement("button");
+
+            button.textContent = categoryNames[category] || category;
+            button.dataset.category = category;
+
+            button.addEventListener("click", () => {
+                showCategory(category);
+            });
+
+            container.appendChild(button);
+        });
+    }
+
+    function showCategory(category) {
+        selectedCategory = category;
+
+        document.querySelectorAll(".categories button").forEach(button => {
+            button.classList.toggle(
+                "active",
+                button.dataset.category === category
+            );
+        });
+
+        const items = frequencyData[category] || [];
+
+        document.getElementById("chartTitle").textContent =
+            (categoryNames[category] || category) + " Frequency";
+
+        document.getElementById("tableTitle").textContent =
+            (categoryNames[category] || category) + " Rankings";
+
+        const status = document.getElementById("status");
+        const tableBody = document.getElementById("frequencyTable");
+
+        tableBody.innerHTML = "";
+
+        if (items.length === 0) {
+            status.textContent = "No equipment entries found for this category.";
+
+            tableBody.innerHTML =
+                '<tr><td colspan="3">No data available</td></tr>';
+
+            if (frequencyChart) {
+                frequencyChart.destroy();
+                frequencyChart = null;
+            }
+
+            return;
+        }
+
+        status.textContent =
+            "Showing " + items.length + " equipment items in this category.";
+
+        items.forEach((item, index) => {
+            const row = document.createElement("tr");
+
+            const rankCell = document.createElement("td");
+            rankCell.textContent = index + 1;
+
+            const equipmentCell = document.createElement("td");
+            equipmentCell.textContent = item.equipment;
+
+            const countCell = document.createElement("td");
+            countCell.textContent = item.frequency;
+
+            row.appendChild(rankCell);
+            row.appendChild(equipmentCell);
+            row.appendChild(countCell);
+
+            tableBody.appendChild(row);
+        });
+
+        const topItems = items.slice(0, 10);
+
+        if (frequencyChart) {
+            frequencyChart.destroy();
+        }
+
+        frequencyChart = new Chart(
+            document.getElementById("frequencyChart"),
+            {
+                type: "bar",
+
+                data: {
+                    labels: topItems.map(item => item.equipment),
+
+                    datasets: [{
+                        label: "Recommendation Count",
+                        data: topItems.map(item => item.frequency),
+                        backgroundColor: "#b58a45",
+                        borderColor: "#e0bd79",
+                        borderWidth: 1
+                    }]
+                },
+
+                options: {
+                    indexAxis: "y",
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: "#eeeeee"
+                            }
+                        }
+                    },
+
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: "#eeeeee",
+                                precision: 0
+                            },
+                            grid: {
+                                color: "#383838"
+                            }
+                        },
+
+                        y: {
+                            ticks: {
+                                color: "#eeeeee"
+                            },
+                            grid: {
+                                color: "#383838"
+                            }
+                        }
+                    }
+                }
+            }
+        );
+    }
+
+    loadFrequencyData();
+</script>
+
+</body>
+</html>

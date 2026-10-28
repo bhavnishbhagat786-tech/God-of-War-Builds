@@ -1,0 +1,14 @@
+ID,Title,Category,Strength,Defence,Runic,Vitality,Cooldown,luck,Skill
+1,"Steel Handles (Default)",Handles,43,0,26,26,26,26,None
+2,"Deadly Obsidian Handles",Handles,94,0,0,0,0,0,"Slayer's Rage Burst"
+3,"Darkdale Handles (Deluxe Edition Exclusive)",Handles,64,0,0,0,0,34,"Deadly Flames"
+4,"Cursed Empress Handles",Handles,43,0,0,0,0,51,"Power of the Empress"
+5,"Pommels of the Undying Spark",Pommels,68,0,34,0,0,0,"Scorching Burn"
+6,"Radiant Warden Handles",Handles,43,0,0,0,51,0,"Whiplash Deflection"
+7,"Pommels of Agile Deceit",Pommels,43,0,0,51,0,0,"Blade Dancer"
+8,"Pommels of Brutal Might",Pommels,43,51,0,0,0,0,"Seized Strength"
+9,"Hardened War Handles",Handles,60,26,0,26,0,0,"Banishing Blade"
+10,"Pommels of the True Flame",Pommels,34,0,43,0,34,0,"Runic Immolation"
+11,"Pommels of the Nine Realms",Pommels,0,0,38,38,0,38,"Momentous Shift"
+12,"Pommels of Burning Unity",Pommels,43,0,51,0,0,0,"Burning Immolation"
+13,"Luminous Recovery Handles",Handles,34,0,0,0,43,34,"Whiplash Refresh"

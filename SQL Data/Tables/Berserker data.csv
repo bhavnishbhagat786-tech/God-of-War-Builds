@@ -1,0 +1,13 @@
+ID,Name,Defence_Weight,Strength_Weight,Runic_Weight,Vitality_Weight,Cooldown_Weight,Luck_Weight
+1,"Fraekni the Zealous",0.350,0.200,0.100,0.200,0.100,0.050
+2,"Bodvar the Fierce",0.350,0.250,0.100,0.150,0.100,0.050
+3,"Starolfr the Troublesome",0.200,0.200,0.200,0.100,0.250,0.050
+4,"Hjalti the Stolid",0.350,0.200,0.100,0.200,0.100,0.050
+5,"Haklangr the Bearded",0.300,0.250,0.100,0.200,0.100,0.050
+6,"Beigadr the Feared",0.200,0.250,0.250,0.100,0.150,0.050
+7,"Svipdagr the Cold",0.250,0.300,0.100,0.150,0.150,0.050
+8,"Skjothendi the Unerring",0.200,0.200,0.300,0.100,0.150,0.050
+9,"Hvitserkr the Bold",0.200,0.250,0.150,0.150,0.200,0.050
+10,"Skarde the Hateful",0.250,0.300,0.100,0.150,0.150,0.050
+11,"Frakki the Arrogant",0.300,0.250,0.100,0.150,0.150,0.050
+12,"King Hrolf Kraki",0.250,0.200,0.200,0.150,0.150,0.050

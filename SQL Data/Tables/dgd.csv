@@ -1,0 +1,13 @@
+ID,Title,Category,Strength,Defence,Runic,Vitality,Cooldown,luck,Skill
+1,"Soldier's Sauroter (Default)",Sauroter,0,43,26,26,26,26,None
+2,"Lion's Roar Sauroter",Sauroter,0,94,0,0,0,0,"Stunning Blast"
+3,"Charging Assault Sauroter",Sauroter,0,68,0,21,21,0,"Fearless Sprinter"
+4,"Mighty Olympic Sauroter",Sauroter,0,26,0,0,51,34,"Detonator's Might"
+5,"Hind of Attuned Elements",Hind,0,43,51,0,0,0,"Extinguish and Vaporise"
+6,"Battle-Scarred Sauroter",Sauroter,0,60,0,43,0,0,"Seized Rage Burst"
+7,"Hind of Weightless Recovery",Hind,0,43,0,0,0,51,"Maelstrom Refresh"
+8,"Hind of Volatile Might",Hind,0,43,0,51,0,0,"Siphoned Strength"
+9,"Hind of the Nine Realms",Hind,0,0,38,38,38,0,"Momentous Shift"
+10,"Hind of the Four Winds",Hind,51,43,0,0,0,0,"Slicing Finish"
+11,"Warrior's Echo Sauroter",Sauroter,34,34,34,0,0,0,"Sonic Piercer"
+12,"Hind of Deadly Vitality",Hind,0,43,0,0,34,34,"Slayer's Health Burst"

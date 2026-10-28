@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>God of War | Data Analytics</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #080c12;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: #9fc8e8;
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        h2 {
+            color: #9fc8e8;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit, minmax(180px, 1fr)
+            );
+            gap: 20px;
+        }
+
+        .card {
+            background: #121923;
+            padding: 22px;
+            border: 1px solid #35485b;
+            border-radius: 12px;
+        }
+
+        .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e45b52;
+        }
+
+        .chart-container {
+            background: #121923;
+            margin-top: 25px;
+            padding: 25px;
+            border-radius: 12px;
+            height: 350px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #35485b;
+        }
+
+        th {
+            color: #9fc8e8;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            .chart-container {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>GOD OF WAR — DATA SCIENCE DASHBOARD</h1>
+
+    <section class="stats">
+        <div class="card">
+            <h3>Total Equipment</h3>
+            <div class="number">
+                {{ data.total_equipment }}
+            </div>
+        </div>
+
+        {% for category, count in data.equipment_counts.items() %}
+        <div class="card">
+            <h3>{{ category }}</h3>
+            <div class="number">{{ count }}</div>
+        </div>
+        {% endfor %}
+    </section>
+
+    <section class="chart-container">
+        <h2>Equipment Category Distribution</h2>
+        <canvas id="equipmentChart"></canvas>
+    </section>
+
+    <section class="chart-container">
+        <h2>Average Armour Statistics</h2>
+        <canvas id="statsChart"></canvas>
+    </section>
+
+    <section class="card" style="margin-top:25px;">
+        <h2>Top 10 Armours by Strength</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Armour</th>
+                    <th>Strength</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for armour in data.top_armours %}
+                <tr>
+                    <td>{{ armour.Title }}</td>
+                    <td>{{ armour.Strength }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2">No armour data available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <script>
+        const categoryLabels = {{ data.equipment_counts.keys() | list | tojson }};
+        const categoryValues = {{ data.equipment_counts.values() | list | tojson }};
+
+        new Chart(document.getElementById("equipmentChart"), {
+            type: "bar",
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    label: "Equipment Count",
+                    data: categoryValues,
+                    backgroundColor: "#e45b52"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: "#ffffff" }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: "#ffffff" }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: "#ffffff" }
+                    }
+                }
+            }
+        });
+
+        const statLabels = {{ data.average_stats.keys() | list | tojson }};
+        const statValues = {{ data.average_stats.values() | list | tojson }};
+
+        new Chart(document.getElementById("statsChart"), {
+            type: "radar",
+            data: {
+                labels: statLabels,
+                datasets: [{
+                    label: "Average Stats",
+                    data: statValues,
+                    backgroundColor: "rgba(90, 170, 220, 0.2)",
+                    borderColor: "#5aaadc",
+                    pointBackgroundColor: "#e45b52"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: "#ffffff" }
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        ticks: { color: "#ffffff" },
+                        pointLabels: { color: "#ffffff" },
+                        grid: { color: "#35485b" },
+                        angleLines: { color: "#35485b" }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

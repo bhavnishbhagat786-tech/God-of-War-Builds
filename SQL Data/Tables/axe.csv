@@ -1,0 +1,14 @@
+ID,Title,Category,Strength,Defence,Runic,Vitality,Cooldown,luck,Skill
+1,"Wooden Knob",Knob,43,0,26,26,26,26,None
+2,"The Furious Maul",Maul,94,0,0,0,0,0,None
+3,"Grip of Darkdale (Deluxe Edition Exclusive)",Grip,64,0,0,0,34,0,"Deadly Awakening"
+4,"Fortified Frost Knob",Knob,43,0,0,0,51,0,"Frost Resolve"
+5,"Haur's Lucky Knob",Knob,43,0,0,0,0,51,"Marksman's Stun"
+6,"Grip of Weighted Recovery",Grip,43,0,51,0,0,0,"Seized Refresh"
+7,"Stonecutter's Knob",Grip,68,34,0,0,0,0,"Slicing Finish"
+8,"Grip of Healing Harmony",Grip,43,51,0,0,0,0,"Permafrost Lifesteal"
+9,"Grip of the Fallen Alchemist",Grip,43,0,0,34,0,34,"Serpent's Health Burst"
+10,"Grip of Radiant Reflection",Grip,60,0,26,0,26,0,"Precision Momentum"
+11,"Banahogg Knob",Knob,43,0,0,51,0,0,"Bare Force"
+12,"Runic Hailstone Knob",Knob,34,0,34,0,0,34,"Prey Upon Frost"
+13,"Grip of the Nine Realms",Grip,0,0,38,0,38,38,"Momentous Shift"

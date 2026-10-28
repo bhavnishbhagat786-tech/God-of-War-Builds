@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Evaluation | God of War Ragnarök</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #101318;
+            color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            padding: 25px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #e5b45c;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #aaa;
+            margin-bottom: 25px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .card, .panel {
+            background: #1b2028;
+            border: 1px solid #343b45;
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .card h3 {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            color: #e5b45c;
+            font-size: 27px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .panel {
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            color: #e5b45c;
+            margin-bottom: 18px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 340px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th, td {
+            padding: 13px;
+            border-bottom: 1px solid #343b45;
+            text-align: left;
+        }
+
+        th {
+            color: #e5b45c;
+        }
+
+        td {
+            color: #ddd;
+        }
+
+        .status {
+            color: #aaa;
+            margin: 15px 0;
+        }
+
+        a {
+            display: inline-block;
+            color: #e5b45c;
+            text-decoration: none;
+            margin-bottom: 25px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <a href="/">← Back to Home</a>
+
+    <h1>Build Evaluation Dashboard</h1>
+    <p class="subtitle">
+        God of War Ragnarök — Recommendation System Analysis
+    </p>
+
+    <p id="status" class="status">Loading build data...</p>
+
+    <section class="cards">
+        <div class="card">
+            <h3>Total Recommended Builds</h3>
+            <p id="totalBuilds">—</p>
+        </div>
+
+        <div class="card">
+            <h3>Average Build Score</h3>
+            <p id="averageScore">—</p>
+        </div>
+
+        <div class="card">
+            <h3>Highest Build Score</h3>
+            <p id="highestScore">—</p>
+        </div>
+
+        <div class="card">
+            <h3>Lowest Build Score</h3>
+            <p id="lowestScore">—</p>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Build Score Comparison</h2>
+        <div class="chart-container">
+            <canvas id="scoreChart"></canvas>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Recommended Builds</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Berserker</th>
+                        <th>Build Score</th>
+                        <th>Chest</th>
+                        <th>Wrist</th>
+                        <th>Waist</th>
+                        <th>Axe</th>
+                        <th>Blades</th>
+                        <th>Spear</th>
+                        <th>Shield</th>
+                        <th>Rond</th>
+                        <th>Relic</th>
+                    </tr>
+                </thead>
+
+                <tbody id="buildTable"></tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<script>
+async function loadEvaluation() {
+    const status = document.getElementById("status");
+
+    try {
+        const response = await fetch("/api/build-evaluation");
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Unable to load data.");
+        }
+
+        document.getElementById("totalBuilds").textContent =
+            data.total_builds;
+
+        document.getElementById("averageScore").textContent =
+            Number(data.average_score).toFixed(4);
+
+        document.getElementById("highestScore").textContent =
+            Number(data.highest_score).toFixed(4);
+
+        document.getElementById("lowestScore").textContent =
+            Number(data.lowest_score).toFixed(4);
+
+        const table = document.getElementById("buildTable");
+
+        data.builds.forEach(build => {
+            const row = document.createElement("tr");
+
+            const columns = [
+                "Berserker", "Build_Score", "Chest", "Wrist",
+                "Waist", "Axe", "Blades", "Spear", "Shield",
+                "Rond", "Relic"
+            ];
+
+            columns.forEach(column => {
+                const cell = document.createElement("td");
+                const value = build[column] ?? "—";
+
+                cell.textContent = column === "Build_Score"
+                    ? Number(value).toFixed(4)
+                    : value;
+
+                row.appendChild(cell);
+            });
+
+            table.appendChild(row);
+        });
+
+        new Chart(document.getElementById("scoreChart"), {
+            type: "bar",
+            data: {
+                labels: data.builds.map(build => build.Berserker),
+                datasets: [{
+                    label: "Build Score",
+                    data: data.builds.map(
+                        build => Number(build.Build_Score || 0)
+                    ),
+                    backgroundColor: "#c

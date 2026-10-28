@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Science Insights | God of War</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #101419;
+            color: #f3f5f7;
+            font-family: Arial, sans-serif;
+        }
+
+        a { color: #d6b36a; }
+
+        h1 { color: #d6b36a; }
+
+        .subtitle { color: #aab4bf; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .card {
+            background: #1b222a;
+            border: 1px solid #39434e;
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .card h3 {
+            color: #d6b36a;
+            margin-top: 0;
+        }
+
+        .value {
+            font-size: 23px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .panel {
+            background: #1b222a;
+            border: 1px solid #39434e;
+            border-radius: 12px;
+            padding: 22px;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 14px;
+            border-bottom: 1px solid #39434e;
+        }
+
+        th { color: #d6b36a; }
+
+        .table-wrap { overflow-x: auto; }
+
+        #status { color: #d6b36a; }
+
+        button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 6px;
+            background: #d6b36a;
+            color: #101419;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        @media(max-width: 600px) {
+            body { padding: 16px; }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="/">← Back to Home</a>
+
+    <h1>DATA SCIENCE INSIGHTS</h1>
+    <p class="subtitle">
+        God of War Ragnarök · Armour Statistics and Data Analysis
+    </p>
+
+    <button id="refreshButton">Refresh Insights</button>
+    <p id="status">Loading data from MySQL...</p>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Total Armours</h3>
+            <div class="value" id="totalArmours">—</div>
+        </div>
+
+        <div class="card">
+            <h3>Highest Strength</h3>
+            <div class="value" id="highestStrength">—</div>
+        </div>
+
+        <div class="card">
+            <h3>Highest Defence</h3>
+            <div class="value" id="highestDefence">—</div>
+        </div>
+
+        <div class="card">
+            <h3>Highest Runic</h3>
+            <div class="value" id="highestRunic">—</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Average Armour Stats</h2>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stat</th>
+                        <th>Average Value</th>
+                    </tr>
+                </thead>
+
+                <tbody id="averageStats">
+                    <tr><td colspan="2">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadInsights() {
+            const status = document.getElementById("status");
+            status.textContent = "Loading insights...";
+
+            try {
+                const response = await fetch("/api/data-science-insights");
+
+                if (!response.ok) {
+                    throw new Error("HTTP " + response.status);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                document.getElementById("totalArmours").textContent =
+                    data.total_armours;
+
+                document.getElementById("highestStrength").textContent =
+                    data.highest_strength;
+
+                document.getElementById("highestDefence").textContent =
+                    data.highest_defence;
+
+                document.getElementById("highestRunic").textContent =
+                    data.highest_runic;
+
+                const tbody = document.getElementById("averageStats");
+                tbody.innerHTML = "";
+
+                Object.entries(data.average_stats).forEach(([stat, value]) => {
+                    const row = document.createElement("tr");
+
+                    const statCell = document.createElement("td");
+                    statCell.textContent = stat;
+
+                    const valueCell = document.createElement("td");
+                    valueCell.textContent = Number(value).toFixed(2);
+
+                    row.append(statCell, valueCell);
+                    tbody.appendChild(row);
+                });
+
+                status.textContent = "Insights loaded successfully.";
+
+            } catch (error) {
+                status.textContent =
+                    "Could not load insights: " + error.message;
+            }
+        }
+
+        document.getElementById("refreshButton")
+            .addEventListener("click", loadInsights);
+
+        loadInsights();
+    </script>
+</body>
+</html>

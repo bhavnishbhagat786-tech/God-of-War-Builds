@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Comparison | God of War</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #101419;
+            color: #f3f5f7;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 { color: #d6b36a; }
+        .subtitle { color: #aab4bf; }
+
+        .panel {
+            background: #1b222a;
+            border: 1px solid #39434e;
+            border-radius: 12px;
+            padding: 22px;
+            margin: 20px 0;
+        }
+
+        .selectors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d6b36a;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        select {
+            background: #101419;
+            color: white;
+            border: 1px solid #596575;
+        }
+
+        button {
+            margin-top: 20px;
+            background: #d6b36a;
+            color: #101419;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .chart-box { height: 400px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #39434e;
+        }
+
+        th { color: #d6b36a; }
+        .table-wrap { overflow-x: auto; }
+        #message { color: #d6b36a; }
+
+        a { color: #d6b36a; }
+
+        @media(max-width: 600px) {
+            body { padding: 15px; }
+            .chart-box { height: 320px; }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="/">← Back to Home</a>
+
+    <h1>BUILD COMPARISON</h1>
+    <p class="subtitle">Compare armour stats using your God of War database.</p>
+
+    <div class="panel">
+        <div class="selectors">
+            <div>
+                <label for="buildA">Build A — Chest Armour</label>
+                <select id="buildA"></select>
+            </div>
+
+            <div>
+                <label for="buildB">Build B — Chest Armour</label>
+                <select id="buildB"></select>
+            </div>
+        </div>
+
+        <button id="compareButton">Compare Builds</button>
+        <p id="message"></p>
+    </div>
+
+    <div class="panel">
+        <h2>Stat Comparison</h2>
+        <div class="chart-box">
+            <canvas id="comparisonChart"></canvas>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Detailed Comparison</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stat</th>
+                        <th id="headingA">Build A</th>
+                        <th id="headingB">Build B</th>
+                        <th>Difference (A − B)</th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonRows">
+                    <tr><td colspan="4">Load armour data to begin.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const statNames = [
+            "Strength", "Defence", "Runic",
+            "Vitality", "Cooldown", "Luck"
+        ];
+
+        let armours = [];
+        let chart = null;
+
+        async function loadArmours() {
+            const message = document.getElementById("message");
+
+            try {
+                const response = await fetch("/api/armours");
+
+                if (!response.ok) {
+                    throw new Error("HTTP " + response.status);
+                }
+
+                armours = await response.json();
+
+                if (!Array.isArray(armours) || armours.length === 0) {
+                    throw new Error("No armour records found.");
+                }
+
+                ["buildA", "buildB"].forEach(id => {
+                    const select = document.getElementById(id);
+                    select.innerHTML = "";
+
+                    armours.forEach((armour, index) => {
+                        const option = document.createElement("option");
+                        option.value = index;
+                        option.textContent = armour.Title;
+                        select.appendChild(option);
+                    });
+                });
+
+                if (armours.length > 1) {
+                    document.getElementById("buildB").selectedIndex = 1;
+                }
+
+                message.textContent = "Armour data loaded successfully.";
+                compareBuilds();
+
+            } catch (error) {
+                message.textContent =
+                    "Could not load armours: " + error.message;
+            }
+        }
+
+        function compareBuilds() {
+            if (armours.length === 0) return;
+
+            const a = armours[
+                Number(document.getElementById("buildA").value)
+            ];
+
+            const b = armours[
+                Number(document.getElementById("buildB").value)
+            ];
+
+            document.getElementById("headingA").textContent = a.Title;
+            document.getElementById("headingB").textContent = b.Title;
+
+            const rows = document.getElementById("comparisonRows");
+            rows.innerHTML = "";
+
+            statNames.forEach(stat => {
+                const valueA = Number(a[stat]) || 0;
+                const valueB = Number(b[stat]) || 0;
+                const difference = valueA - valueB;
+
+                const row = document.createElement("tr");
+
+                [
+                    stat,
+                    valueA,
+                    valueB,
+                    difference > 0 ? "+" + difference : difference
+                ].forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+                rows.appendChild(row);
+            });
+
+            if (chart) chart.destroy();
+
+            chart = new Chart(
+                document.getElementById("comparisonChart"),
+                {
+                    type: "radar",
+                    data: {
+                        labels: statNames,
+                        datasets: [
+                            {
+                                label: a.Title,
+                                data: statNames.map(
+                                    stat => Number(a[stat]) || 0
+                                ),
+                                borderColor: "#d6b36a",
+                                backgroundColor: "rgba(214,179,106,0.18)"
+                            },
+                            {
+                                label: b.Title,
+                                data: statNames.map(
+                                    stat => Number(b[stat]) || 0
+                                ),
+                                borderColor: "#65a9df",
+                                backgroundColor: "rgba(101,169,223,0.18)"
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                ticks: { color: "#eee" },
+                                pointLabels: { color: "#eee" },
+                                grid: { color: "#39434e" },
+                                angleLines: { color: "#39434e" }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { color: "#eee" }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        document.getElementById("compareButton")
+            .addEventListener("click", compareBuilds);
+
+        loadArmours();
+    </script>
+</body>
+</html>

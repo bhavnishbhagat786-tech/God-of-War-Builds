@@ -1,0 +1,13 @@
+ID,Title,Strength,Defence,Runic,Vitality,Cooldown,luck,Skill,Perk
+1,"Rönd of Volition (Default)",0,43,26,26,26,26,None,None
+2,"Rönd of Aggravation",0,43,0,34,0,34,"Riposte Rage Burst",None
+3,"Rönd of Expedition",0,43,0,0,51,0,"Riposte Refresh",None
+4,"Rönd of Affliction",0,43,34,0,34,0,"Strike of Affliction",None
+5,"Rönd of Restoration",0,43,0,51,0,0,"Restoring Shield",None
+6,"Rönd of Deflection",0,43,0,0,0,0,"Agile Deflection",None
+7,"Rönd of Purification",51,43,0,0,0,0,"Contagion Discharge",None
+8,"Rönd of the Nine Realms",0,43,0,0,0,51,"Riposte Realm Shift",None
+9,"Rönd of Fortification",0,94,0,0,0,0,Fortification,None
+10,"Rönd of Absorption",0,43,51,0,0,0,"Defender's Momentum","The Permafrost, Immolation and Maelstrom skill gauges increase when Blocking or Parrying."
+11,"Rönd of Disruption",0,43,34,0,0,34,"Elemental Storm",None
+12,"Rönd of Obliteration",17,17,21,21,21,21,"Shards of the Valkyrie",None

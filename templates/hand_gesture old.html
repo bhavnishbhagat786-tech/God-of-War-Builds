@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>God of War — Hand Gesture Control</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 22px; background: #101114; color: #f4f4f4;
+      font-family: Arial, sans-serif; text-align: center;
+    }
+    h1 { color: #e7bd58; }
+    .panel {
+      max-width: 850px; margin: 22px auto; padding: 20px;
+      background: #1c1d22; border: 1px solid #66532b; border-radius: 12px;
+    }
+    .camera-box { max-width: 720px; margin: auto; background: #000; border-radius: 8px; overflow: hidden; }
+    video { width: 100%; display: block; transform: scaleX(-1); }
+    button {
+      margin: 7px; padding: 12px 18px; border: 0; border-radius: 6px;
+      font-weight: bold; cursor: pointer;
+    }
+    #start { background: #d6a936; }
+    #openSite { background: #e8e8e8; }
+    #stop { background: #bd4545; color: white; }
+    #status { color: #e7bd58; min-height: 24px; }
+    #gesture { font-size: 24px; font-weight: bold; margin: 12px; }
+    .note { color: #b9b9b9; line-height: 1.55; }
+    .mapping { text-align: left; display: inline-block; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <h1>🖐️ God of War — Hand Gesture Control</h1>
+  <div class="panel">
+    <p class="note">Show one hand clearly to the webcam. This page uses browser-based MediaPipe hand tracking.</p>
+    <div class="camera-box"><video id="video" autoplay playsinline muted></video></div>
+    <button id="start">Enable Camera & Hand Tracking</button>
+    <button id="openSite">Open God of War Website</button>
+    <button id="stop">Stop Camera</button>
+    <h3 id="status">Camera is OFF</h3>
+    <div id="gesture">Waiting for hand…</div>
+    <div class="mapping note">
+      <b>Gestures</b><br>
+      Open palm 🖐️ = control active<br>
+      Move hand left/right = previous/next focusable item<br>
+      Move hand up/down = scroll website<br>
+      Closed fist ✊ = pause controls
+    </div>
+    <p class="note">Tip: Keep your hand about an arm's length from the camera and use even lighting.</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script>
+    const video = document.getElementById('video');
+    const statusText = document.getElementById('status');
+    const gestureText = document.getElementById('gesture');
+    const startButton = document.getElementById('start');
+    const stopButton = document.getElementById('stop');
+    const openSiteButton = document.getElementById('openSite');
+
+    let camera = null;
+    let hands = null;
+    let siteWindow = null;
+    let previousCenter = null;
+    let lastActionAt = 0;
+    let paused = false;
+    let active = false;
+
+    openSiteButton.addEventListener('click', () => {
+      siteWindow = window.open('/', 'gowBuildWebsite');
+      if (!siteWindow) {
+        statusText.textContent = 'Popup blocked — allow pop-ups for this local site, then click again.';
+        return;
+      }
+      statusText.textContent = 'Website opened. Enable camera and move your hand.';
+    });
+
+    startButton.addEventListener('click', async () => {
+      if (active) return;
+      try {
+        statusText.textContent = 'Loading hand-tracking model…';
+        if (typeof Hands === 'undefined' || typeof Camera === 'undefined') {
+          statusText.textContent = 'MediaPipe did not load. Check internet and refresh this page.';
+          return;
+        }
+
+        hands = new Hands({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+        hands.setOptions({
+          maxNumHands: 1,
+          modelComplexity: 0,
+          minDetectionConfidence: 0.6,
+          minTrackingConfidence: 0.55
+        });
+        hands.onResults(onResults);
+
+        camera = new Camera(video, {
+          onFrame: async () => {
+            if (hands) await hands.send({ image: video });
+          },
+          width: 640,
+          height: 480
+        });
+        await camera.start();
+        active = true;
+        statusText.textContent = 'Camera ON — show your hand';
+      } catch (err) {
+        statusText.textContent = 'Camera/model error: ' + (err.message || err);
+      }
+    });
+
+    function fingerUp(landmarks, tip, pip) {
+      // For a mirrored selfie view, y smaller means the fingertip is higher.
+      return landmarks[tip].y < landmarks[pip].y;
+    }
+
+    function isOpenPalm(lm) {
+      const index = fingerUp(lm, 8, 6);
+      const middle = fingerUp(lm, 12, 10);
+      const ring = fingerUp(lm, 16, 14);
+      const pinky = fingerUp(lm, 20, 18);
+      const thumb = Math.abs(lm[4].x - lm[2].x) > 0.06;
+      return index && middle && ring && pinky && thumb;
+    }
+
+    function isFist(lm) {
+      const index = !fingerUp(lm, 8, 6);
+      const middle = !fingerUp(lm, 12, 10);
+      const ring = !fingerUp(lm, 16, 14);
+      const pinky = !fingerUp(lm, 20, 18);
+      return index && middle && ring && pinky;
+    }
+
+    function onResults(results) {
+      if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+        gestureText.textContent = 'No hand detected';
+        previousCenter = null;
+        return;
+      }
+
+      const lm = results.multiHandLandmarks[0];
+      const center = { x: lm[9].x, y: lm[9].y };
+
+      if (isFist(lm)) {
+        paused = true;
+        gestureText.textContent = '✊ Fist — controls paused';
+        previousCenter = center;
+        return;
+      }
+
+      if (isOpenPalm(lm)) {
+        paused = false;
+        gestureText.textContent = '🖐️ Open palm — controls active';
+      } else if (paused) {
+        gestureText.textContent = 'Controls paused — show open palm to resume';
+        previousCenter = center;
+        return;
+      } else {
+        gestureText.textContent = 'Hand detected — open palm to activate';
+        previousCenter = center;
+        return;
+      }
+
+      if (!previousCenter) {
+        previousCenter = center;
+        return;
+      }
+
+      const dx = center.x - previousCenter.x;
+      const dy = center.y - previousCenter.y;
+      const threshold = 0.075;
+      let action = null;
+
+      if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
+        // Mirrored preview: visual movement left/right is inverted in camera coordinates.
+        if (Math.abs(dx) > Math.abs(dy)) {
+          action = dx > 0 ? 'LEFT' : 'RIGHT';
+        } else {
+          action = dy > 0 ? 'DOWN' : 'UP';
+        }
+      }
+
+      if (action && Date.now() - lastActionAt > 850) {
+        performAction(action);
+        lastActionAt = Date.now();
+      }
+      previousCenter = center;
+    }
+
+    function performAction(action) {
+      gestureText.textContent = `🖐️ Gesture: ${action}`;
+      if (!siteWindow || siteWindow.closed) {
+        statusText.textContent = 'Open the God of War Website button first.';
+        return;
+      }
+      try {
+        if (action === 'UP') {
+          siteWindow.scrollBy({ top: -220, behavior: 'smooth' });
+        } else if (action === 'DOWN') {
+          siteWindow.scrollBy({ top: 220, behavior: 'smooth' });
+        } else {
+          const selector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+          const items = Array.from(siteWindow.document.querySelectorAll(selector))
+            .filter(el => el.getClientRects().length > 0);
+          if (!items.length) return;
+          const current = items.indexOf(siteWindow.document.activeElement);
+          let next;
+          if (action === 'RIGHT') next = current < 0 ? 0 : (current + 1) % items.length;
+          else next = current < 0 ? items.length - 1 : (current - 1 + items.length) % items.length;
+          items[next].focus();
+          items[next].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      } catch (err) {
+        statusText.textContent = 'Keep the website open in the tab created by this page.';
+      }
+    }
+
+    stopButton.addEventListener('click', stopTracking);
+    function stopTracking() {
+      active = false;
+      if (camera) {
+        camera.stop();
+        camera = null;
+      }
+      if (hands) {
+        hands.close();
+        hands = null;
+      }
+      video.srcObject = null;
+      previousCenter = null;
+      statusText.textContent = 'Camera is OFF';
+      gestureText.textContent = 'Tracking stopped';
+    }
+    window.addEventListener('beforeunload', stopTracking);
+  </script>
+</body>
+</html>
