@@ -6,6 +6,9 @@ from analytics import get_analytics
 from flask import Flask, request, jsonify, render_template
 import requests
 import mysql.connector
+from boss_build_engine import generate_boss_build
+from boss_build_engine import generate_boss_build, PLAYSTYLE_WEIGHTS
+from database_engine import get_db_connection
 
 app = Flask(__name__, static_folder="static")
 
@@ -39,55 +42,85 @@ def home():
     return app.send_static_file("index.html")
 
 
+
 # ---------------- BUILD RECOMMENDATION API ----------------
 
 @app.route("/api/build", methods=["GET"])
 def get_build():
+
     name = request.args.get("berserker", "").strip()
+    playstyle = request.args.get("playstyle", "balanced").strip().lower()
 
     if not name:
         return jsonify({
             "error": "Berserker name is required"
         }), 400
 
-    conn = None
-    cursor = None
-
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute(
-            """
-            SELECT *
-            FROM final_recommendations
-            WHERE Berserker = %s
-            """,
-            (name,)
+        # Generate build using Berserker and selected Playstyle
+        result = generate_boss_build(
+            name,
+            playstyle=playstyle
         )
 
-        result = cursor.fetchone()
+        if "error" in result:
+            return jsonify(result), 404
 
-        if result is None:
-            return jsonify({
-                "error": "Berserker not found",
-                "requested_name": name
-            }), 404
+        equipment = result["equipment"]
 
-        return jsonify(result)
+        def get_title(slot):
+            item = equipment.get(slot)
 
-    except mysql.connector.Error:
-        app.logger.exception("Database query failed")
+            if isinstance(item, dict):
+                return item.get("Title")
+
+            return None
+
+        def combine_titles(slots):
+            parts = []
+
+            for slot in slots:
+                title = get_title(slot)
+
+                if title:
+                    parts.append(title)
+
+            return " + ".join(parts) if parts else None
+
+        response = {
+            "Berserker": result["berserker"],
+            "Playstyle": result["playstyle"],
+            "Build_Score": result["build_score"],
+
+            "Chest": get_title("Chest"),
+            "Wrist": get_title("Wrist"),
+            "Waist": get_title("Waist"),
+
+            "Axe": combine_titles(["Grip", "Knob", "Maul"]),
+            "Blades": combine_titles(["Handles", "Pommels"]),
+            "Spear": combine_titles(["Hind", "Sauroter"]),
+
+            "Shield": get_title("shield"),
+            "Rond": get_title("rond"),
+            "Relic": get_title("relic"),
+
+            "Final_Score": result["final_score"],
+            "Equipment_Score": equipment["equipment_score"],
+            "Relic_Score": equipment["relic_score"],
+            "Synergy_Score": equipment["synergy_score"],
+            "Synergies": equipment["synergy"],
+
+            "Equipment_Details": equipment
+        }
+
+        return jsonify(response)
+
+    except Exception as error:
+        app.logger.exception("Dynamic build generation failed")
+
         return jsonify({
-            "error": "Could not retrieve the recommendation."
+            "error": str(error)
         }), 500
-
-    finally:
-        if cursor is not None:
-            cursor.close()
-
-        if conn is not None:
-            conn.close()
 
 
 # ---------------- AI CONNECTION TEST ----------------
@@ -539,12 +572,18 @@ def build_evaluation_api():
         """)
 
         builds = cursor.fetchall()
+# Convert Saved_At into local-time compatible string
+        for build in builds:
+            if build.get("Saved_At"):
+                build["Saved_At"] = build["Saved_At"].strftime(
+            "%Y-%m-%dT%H:%M:%S"
+        )
 
         if not builds:
             return jsonify({
                 "error": "No recommended builds found."
             }), 404
-
+    
         scores = [
             float(build["Build_Score"] or 0)
             for build in builds
@@ -630,7 +669,185 @@ def equipment_frequency_api():
 @app.route("/equipment-frequency")
 def equipment_frequency_page():
     return render_template("equipment_frequency.html")
-                 
+
+
+@app.route("/api/compare-builds", methods=["GET"])
+
+@app.route("/api/compare-builds", methods=["GET"])
+def compare_builds():
+    try:
+        playstyle = request.args.get(
+            "playstyle", "balanced"
+        ).strip().lower()
+
+        if playstyle not in PLAYSTYLE_WEIGHTS:
+            return jsonify({
+                "error": "Invalid playstyle"
+            }), 400
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute("SELECT Name FROM berserkers")
+        bosses = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+
+        comparisons = []
+
+        for boss in bosses:
+            result = generate_boss_build(
+                boss["Name"],
+                playstyle=playstyle
+            )
+
+            if "error" in result:
+                continue
+
+            equipment = result["equipment"]
+
+            comparisons.append({
+                "Berserker": result["berserker"],
+                "Playstyle": playstyle,
+                "Equipment_Score": result["build_score"],
+                "Final_Score": result["final_score"],
+                "Relic": (
+                    equipment.get("relic") or {}
+                ).get("Title", "N/A"),
+                "Synergy_Score": equipment.get(
+                    "synergy_score", 0
+                )
+            })
+
+        comparisons.sort(
+            key=lambda item: item["Final_Score"],
+            reverse=True
+        )
+
+        return jsonify({
+            "playstyle": playstyle,
+            "total_berserkers": len(comparisons),
+            "best_build": (
+                comparisons[0] if comparisons else None
+            ),
+            "comparisons": comparisons
+        })
+
+    except Exception as error:
+        app.logger.exception("Comparison failed")
+        return jsonify({"error": str(error)}), 500
+
+# ---------------- final reccomendation ----------------
+@app.route("/api/save-build", methods=["POST"])
+def save_build():
+    data = request.get_json()
+
+    if not data or not data.get("Berserker"):
+        return jsonify({"error": "Invalid build data"}), 400
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO final_recommendations
+            (Berserker, Build_Score, Chest, Wrist, Waist,
+             Axe, Blades, Spear, Shield, Rond, Relic)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            data.get("Berserker"),
+            data.get("Build_Score"),
+            data.get("Chest"),
+            data.get("Wrist"),
+            data.get("Waist"),
+            data.get("Axe"),
+            data.get("Blades"),
+            data.get("Spear"),
+            data.get("Shield"),
+            data.get("Rond"),
+            data.get("Relic")
+        ))
+
+        connection.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Build saved successfully!",
+            "id": cursor.lastrowid
+        })
+
+    except Exception as error:
+        connection.rollback()
+        return jsonify({"error": str(error)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
+
+# save data builds history
+
+@app.route("/api/saved-builds", methods=["GET"])
+def get_saved_builds():
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        cursor.execute("""
+            SELECT *
+            FROM final_recommendations
+            ORDER BY ID DESC
+        """)
+
+        builds = cursor.fetchall()
+
+        return jsonify({
+            "success": True,
+            "total": len(builds),
+            "builds": builds
+        })
+
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
+       
+# delete button 
+@app.route("/api/delete-build/<int:build_id>", methods=["DELETE"])
+def delete_build(build_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            "DELETE FROM final_recommendations WHERE ID = %s",
+            (build_id,)
+        )
+
+        if cursor.rowcount == 0:
+            return jsonify({
+                "success": False,
+                "error": "Build not found."
+            }), 404
+
+        connection.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Build deleted successfully!"
+        })
+
+    except Exception as error:
+        connection.rollback()
+        return jsonify({"error": str(error)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()       
+          
 if __name__ == "__main__":
     app.run(debug=True)
 

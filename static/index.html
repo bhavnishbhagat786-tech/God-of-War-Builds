@@ -409,6 +409,21 @@
                     <option>King Hrolf Kraki</option>
                 </select>
 
+
+<div class="playstyle-selector">
+    <label for="playstyle">Choose Your Fighting Style</label>
+
+    <select id="playstyle">
+        <option value="balanced">Balanced</option>
+        <option value="aggressive">Aggressive</option>
+        <option value="defensive">Defensive</option>
+        <option value="runic">Runic Power</option>
+        <option value="cooldown">Cooldown Focus</option>
+        <option value="survival">Survival</option>
+    </select>
+</div>
+
+
                 <button type="button" id="recommendBtn" class="recommend-button">
                     ⚔ Generate My Build →
                 </button>
@@ -448,6 +463,48 @@
                 </div>
             </div>
 
+
+<!-- Berserker Build Comparison -->
+<section id="comparisonSection" class="comparison-section">
+
+    <h2>⚔ Berserker Build Rankings</h2>
+
+    <p>Compare recommended builds of all 12 Berserkers.</p>
+
+    <button type="button" id="compareBuildsBtn">
+        Compare All Berserkers
+    </button>
+
+    <div id="comparisonResults"></div>
+
+</section>
+
+<!-- Saved Builds History -->
+<section id="savedBuildsSection" class="comparison-section">
+
+    <h2>💾 Saved Builds History</h2>
+
+    <p>View all your previously saved Berserker builds.</p>
+
+    <button type="button" id="loadSavedBuildsBtn">
+        View Saved Builds
+    </button>
+    <button type="button" id="exportSavedBuildsBtn">
+    📥 Export to CSV
+</button>
+<!--delete button -->
+<div class="saved-build-search">
+    <input
+        type="text"
+        id="savedBuildSearch"
+        placeholder="Search Berserker name..."
+    >
+</div>
+
+<div id="savedBuildsResults"></div>
+
+
+</section>
 
             <!-- Featured Berserkers -->
             <div class="featured-section" id="berserkers">
