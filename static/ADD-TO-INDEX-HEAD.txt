@@ -1,0 +1,7 @@
+Add this one line immediately AFTER your existing stylesheet line in static/index.html:
+
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/cinematic-norse.css">
+
+Then copy cinematic-norse.css into your project's static folder.
+Do not remove or replace your existing style.css or script.js.

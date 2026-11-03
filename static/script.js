@@ -311,8 +311,21 @@ aiChatForm.addEventListener("submit", async (event) => {
 
     const message = aiChatInput.value.trim();
 
-    if (!message) return;
+if (!message) return;
 
+// Welcome screen hide karo
+const welcome = document.getElementById("aiWelcome");
+if (welcome) {
+    welcome.style.display = "none";
+}
+
+    // AI Suggested Prompts
+document.querySelectorAll(".ai-prompt").forEach(button => {
+    button.addEventListener("click", () => {
+        aiChatInput.value = button.textContent.trim();
+        aiChatForm.requestSubmit();
+    });
+});
     // Show user's message
     const userMessage = document.createElement("p");
     userMessage.textContent = message;
@@ -359,6 +372,18 @@ aiChatForm.addEventListener("submit", async (event) => {
     }
 
     aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+});
+// Suggested prompt buttons
+document.querySelectorAll(".ai-prompt").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        aiChatInput.value = button.textContent.trim();
+
+        aiChatForm.requestSubmit();
+
+    });
+
 });
 
 

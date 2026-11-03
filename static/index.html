@@ -9,6 +9,7 @@
     <title>God of War Ragnarök | Build System</title>
 
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/cinematic-norse.css">
 </head>
 
 <body>
@@ -779,52 +780,54 @@
     </div>
 </section>
    
-<!-- AI Assistant Chatbox -->
-<div class="ai-chat-widget" id="ai-assistant">
 
-<button id="aiChatToggle" class="ai-chat-toggle" aria-label="Open AI assistant">
-    
-    <img src="/static/Images/AI Logo.png" alt="Kratos">
-</button>
+<!-- CHATGPT STYLE AI ASSISTANT -->
+<div id="ai-assistant">
 
-    <section id="aiChatWindow" class="ai-chat-window" hidden>
-        <img
-        src="/static/Images/AI Logo.png"
-        alt="Kratos AI Assistant"
-        class="ai-assistant-logo"
->
+    <button id="aiChatToggle" class="ai-chat-toggle">
+        <img src="/static/Images/AI Logo.png" alt="AI">
+    </button>
+
+    <div id="aiChatWindow" class="ai-chat-window" hidden>
 
         <div class="ai-chat-header">
             <div>
-                <h3>Kratos AI Assistant</h3>
-                <p>God of War Ragnarök</p>
+                <h3>God of War AI</h3>
+                <p>Your Ragnarök companion</p>
             </div>
-
-            <button type="button" id="aiChatClose" aria-label="Close chat">
-                ✕
-            </button>
+            <button id="aiChatClose" type="button">×</button>
         </div>
 
-        <div id="aiChatMessages" class="ai-chat-messages">
-            <p class="ai-message">
-                I am Kratos. Ask me about Berserkers, armor, weapons, or builds.
-            </p>
+        <div class="ai-welcome" id="aiWelcome">
+            <div class="ai-welcome-icon">
+    <img src="/static/Images/AI Iamge.png" alt="God of War AI">
+</div>
+            <h2>What can I help you with?</h2>
+            <p>Ask anything about God of War Ragnarök.</p>
+
+            <div class="ai-suggestions">
+                <button type="button" class="ai-prompt">Best build for King Hrolf?</button>
+                <button type="button" class="ai-prompt">Tell me about Kratos</button>
+                <button type="button" class="ai-prompt">Explain the Norse mythology</button>
+                <button type="button" class="ai-prompt">How to defeat Berserkers?</button>
+            </div>
         </div>
+
+        <div id="aiChatMessages" class="ai-chat-messages"></div>
 
         <form id="aiChatForm" class="ai-chat-form">
             <input
                 type="text"
                 id="aiChatInput"
-                placeholder="Ask Kratos something..."
+                placeholder="Message God of War AI..."
                 autocomplete="off"
                 required
             >
-
-            <button type="submit">Send</button>
+            <button type="submit" aria-label="Send message">↑</button>
         </form>
 
-    </section>
-
+        <p class="ai-disclaimer">AI can make mistakes. Verify important information.</p>
+    </div>
 </div>
 
 <!-- Java Script Connection -->

@@ -236,7 +236,12 @@ GOW_LORE = {
     ),
     "who is the wife of kratos in greek mythalogy": (
         "Lsandra is the wife of kratos on greek mythology."
-    )
+    ),
+    "who is kratos": (
+            "Kratos is the main protagonist of the God of War series. "
+            "He is a Spartan warrior who becomes the Greek God of War "
+            "and later travels through the Norse realms."
+        ),
 }
 
 @app.route("/api/ai-chat", methods=["POST"])
