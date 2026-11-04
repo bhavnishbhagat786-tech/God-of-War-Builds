@@ -3,210 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Armour Clustering | God of War</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            padding: 30px;
-            background: #101419;
-            color: #f3f5f7;
-            font-family: Arial, sans-serif;
-        }
-        h1 { color: #d6b36a; }
-        .subtitle { color: #aab4bf; }
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 18px;
-            margin: 25px 0;
-        }
-        .card, .panel {
-            background: #1b222a;
-            border: 1px solid #39434e;
-            border-radius: 12px;
-            padding: 20px;
-        }
-        .card h3 { color: #d6b36a; margin-top: 0; }
-        .value { font-size: 30px; font-weight: bold; }
-        .panels {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .chart-box { height: 320px; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid #39434e;
-            text-align: left;
-        }
-        th { color: #d6b36a; }
-        .table-wrap { overflow-x: auto; }
-        .note { color: #aab4bf; font-size: 14px; }
-        a { color: #d6b36a; }
-        @media (max-width: 600px) {
-            body { padding: 16px; }
-        }
-    </style>
+    <title>Armour Clustering | God of War Ragnarök</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='clustering.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="{{ url_for('static', filename='clustering.js') }}" defer></script>
 </head>
+
 <body>
-    <a href="/">← Back to Home</a>
+<div class="page-shell">
 
-    <h1>ARMOUR CLUSTER ANALYSIS</h1>
-    <p class="subtitle">God of War Ragnarök · Unsupervised Machine Learning</p>
+    <header class="topbar">
+        <a href="/" class="brand">
+            GOD OF WAR
+            <span>RAGNARÖK DATA SYSTEM</span>
+        </a>
 
-    <div class="cards">
-        <div class="card">
-            <h3>Cluster 0</h3>
-            <div class="value" id="count0">—</div>
-            <p>Strength + Vitality focused</p>
+        <nav class="navigation">
+            <a href="/">Home</a>
+            <a href="/analytics">Data Analytics</a>
+            <a href="/insights">Data Science Insights</a>
+            <a href="/api/clustering" target="_blank">Clustering API</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+
+        <section class="hero">
+            <div class="eyebrow">UNSUPERVISED MACHINE LEARNING</div>
+            <h1>Armour Cluster Analysis</h1>
+            <p>
+                Discover hidden patterns in Kratos' armour collection.
+                Explore how machine learning groups armour based on
+                their statistical attributes.
+            </p>
+
+            <div class="hero-tags">
+                <span>PYTHON</span>
+                <span>SCIKIT-LEARN</span>
+                <span>K-MEANS CLUSTERING</span>
+            </div>
+        </section>
+
+        <div class="section-heading">
+            <div>
+                <h2>Cluster Overview</h2>
+                <p>Armour classification summary</p>
+            </div>
+            <span class="live-label"><i></i> API CONNECTED</span>
         </div>
-        <div class="card">
-            <h3>Cluster 1</h3>
-            <div class="value" id="count1">—</div>
-            <p>Defence focused</p>
+
+        <section class="cards">
+
+            <article class="cluster-card cluster-gold">
+                <div class="cluster-top">
+                    <span class="cluster-symbol">I</span>
+                    <span class="cluster-number">CLUSTER 00</span>
+                </div>
+                <h3>Strength & Vitality</h3>
+                <div class="value" id="count0">—</div>
+                <p>Strength and vitality focused armour</p>
+            </article>
+
+            <article class="cluster-card cluster-blue">
+                <div class="cluster-top">
+                    <span class="cluster-symbol">II</span>
+                    <span class="cluster-number">CLUSTER 01</span>
+                </div>
+                <h3>Defence Focused</h3>
+                <div class="value" id="count1">—</div>
+                <p>Armour focused on defensive attributes</p>
+            </article>
+
+            <article class="cluster-card cluster-purple">
+                <div class="cluster-top">
+                    <span class="cluster-symbol">III</span>
+                    <span class="cluster-number">CLUSTER 02</span>
+                </div>
+                <h3>Strength & Runic</h3>
+                <div class="value" id="count2">—</div>
+                <p>Strength and runic focused armour</p>
+            </article>
+
+        </section>
+
+        <div class="section-heading">
+            <div>
+                <h2>Visual Intelligence</h2>
+                <p>Machine learning results and statistical patterns</p>
+            </div>
         </div>
-        <div class="card">
-            <h3>Cluster 2</h3>
-            <div class="value" id="count2">—</div>
-            <p>Strength + Runic focused</p>
-        </div>
-    </div>
 
-    <div class="panels">
-        <div class="panel">
-            <h2>Average Stats by Cluster</h2>
-            <div class="chart-box"><canvas id="statsChart"></canvas></div>
-        </div>
-        <div class="panel">
-            <h2>Armour Count</h2>
-            <div class="chart-box"><canvas id="countChart"></canvas></div>
-        </div>
-    </div>
+        <section class="panels">
 
-    <div class="panel" style="margin-top:20px;">
-        <h2>Armour Classification</h2>
-        <p class="note">Cluster numbers are machine-learning labels, not rankings.</p>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Armour</th>
-                        <th>Strength</th>
-                        <th>Defence</th>
-                        <th>Runic</th>
-                        <th>Vitality</th>
-                        <th>Cluster</th>
-                    </tr>
-                </thead>
-                <tbody id="armourRows">
-                    <tr><td colspan="6">Loading armour data...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+            <article class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h3>Average Stats by Cluster</h3>
+                        <p>Attribute comparison between clusters</p>
+                    </div>
+                    <span class="chart-icon">▥</span>
+                </div>
 
-    <script>
-        async function loadClustering() {
-            const rows = document.getElementById("armourRows");
+                <div class="chart-box">
+                    <canvas id="statsChart"></canvas>
+                </div>
+            </article>
 
-            try {
-                const response = await fetch("/api/clustering");
+            <article class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h3>Armour Distribution</h3>
+                        <p>Number of armour pieces in each cluster</p>
+                    </div>
+                    <span class="chart-icon">◉</span>
+                </div>
 
-                if (!response.ok) {
-                    throw new Error("API returned HTTP " + response.status);
-                }
+                <div class="chart-box">
+                    <canvas id="countChart"></canvas>
+                </div>
+            </article>
 
-                const data = await response.json();
+        </section>
 
-                if (data.error) throw new Error(data.error);
+        <section class="panel classification-panel">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">MACHINE LEARNING OUTPUT</div>
+                    <h3>Armour Classification</h3>
+                    <p>Complete armour dataset with assigned cluster labels</p>
+                </div>
+                <span class="result-label">CLASSIFICATION RESULTS</span>
+            </div>
 
-                const armours = data.armours;
-                const stats = data.statistics;
-                const counts = data.counts;
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Armour</th>
+                            <th>Strength</th>
+                            <th>Defence</th>
+                            <th>Runic</th>
+                            <th>Vitality</th>
+                            <th>Cluster</th>
+                        </tr>
+                    </thead>
 
-                [0, 1, 2].forEach(id => {
-                    document.getElementById("count" + id).textContent = counts[id] ?? 0;
-                });
+                    <tbody id="armourRows">
+                        <tr>
+                            <td colspan="6" class="loading">
+                                Loading armour classification...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                rows.innerHTML = "";
+            <p class="note">
+                Note: Cluster numbers are machine-learning labels, not rankings.
+            </p>
+        </section>
 
-                armours.forEach(item => {
-                    const tr = document.createElement("tr");
+        <footer class="footer">
+            GOD OF WAR RAGNARÖK · MACHINE LEARNING · DATA SCIENCE PROJECT
+        </footer>
 
-                    [
-                        item.Title,
-                        item.Strength,
-                        item.Defence,
-                        item.Runic,
-                        item.Vitality,
-                        item.Cluster
-                    ].forEach(value => {
-                        const td = document.createElement("td");
-                        td.textContent = value ?? "";
-                        tr.appendChild(td);
-                    });
-
-                    rows.appendChild(tr);
-                });
-
-                const labels = ["Strength", "Defence", "Runic", "Vitality", "Cooldown", "Luck"];
-
-                new Chart(document.getElementById("statsChart"), {
-                    type: "bar",
-                    data: {
-                        labels,
-                        datasets: [0, 1, 2].map((id, index) => ({
-                            label: "Cluster " + id,
-                            data: labels.map(stat => stats[id][stat]),
-                            backgroundColor: ["#c89b4b", "#5b91c9", "#a76bd1"][index]
-                        }))
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: { beginAtZero: true, ticks: { color: "#eee" }, grid: { color: "#39434e" } },
-                            x: { ticks: { color: "#eee" }, grid: { color: "#39434e" } }
-                        },
-                        plugins: { legend: { labels: { color: "#eee" } } }
-                    }
-                });
-
-                new Chart(document.getElementById("countChart"), {
-                    type: "doughnut",
-                    data: {
-                        labels: ["Cluster 0", "Cluster 1", "Cluster 2"],
-                        datasets: [{
-                            data: [counts[0] || 0, counts[1] || 0, counts[2] || 0],
-                            backgroundColor: ["#c89b4b", "#5b91c9", "#a76bd1"]
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { labels: { color: "#eee" } } }
-                    }
-                });
-
-            } catch (error) {
-                rows.innerHTML = "";
-                const tr = document.createElement("tr");
-                const td = document.createElement("td");
-                td.colSpan = 6;
-                td.textContent = "Could not load clustering data: " + error.message;
-                tr.appendChild(td);
-                rows.appendChild(tr);
-            }
-        }
-
-        loadClustering();
-    </script>
+    </main>
+</div>
 </body>
 </html>

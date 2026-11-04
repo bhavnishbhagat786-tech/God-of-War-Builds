@@ -10,6 +10,7 @@ from boss_build_engine import generate_boss_build
 from boss_build_engine import generate_boss_build, PLAYSTYLE_WEIGHTS
 from database_engine import get_db_connection
 
+
 app = Flask(__name__, static_folder="static")
 
 # ---------------- Camera Route ----------------
@@ -404,10 +405,15 @@ def ai_chat():
 def analytics():
     try:
         data = get_analytics()
-        return render_template("analytics.html", data=data)
+
+        return render_template(
+            "analytics.html",
+            data=data
+        )
+
     except Exception as e:
         app.logger.exception("Analytics dashboard error")
-        return f"Analytics error: {e}", 500
+        return f"Analytics Error: {e}", 500
     
 
 # cluster route
@@ -540,9 +546,9 @@ def get_armours():
             conn.close()      
 
 #comparison route
-@app.route("/compare")
-def compare_page():
-    return render_template("compare.html")
+@app.route("/build_comparison")
+def build_comparison_page():
+    return render_template("build_comparison.html")
 
 # data scinece doute 
 @app.route("/api/data-science-insights")

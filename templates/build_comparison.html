@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Build Comparison | God of War</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='build_comparison.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="{{ url_for('static', filename='build_comparison.js') }}" defer></script>
+</head>
+
+<body>
+
+    <nav class="top-nav">
+        <a href="/" class="brand">GOD OF WAR <span>RAGNARÖK</span></a>
+
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/clustering">Clustering</a>
+            <a href="/build-comparison" class="active">Build Comparison</a>
+        </div>
+    </nav>
+
+    <main class="container">
+
+        <header class="hero">
+            <div class="eyebrow">DATA SCIENCE MODULE</div>
+            <h1>BUILD <span>COMPARISON</span></h1>
+            <p>
+                Compare armour attributes, analyse stat differences,
+                and discover which equipment offers better performance.
+            </p>
+        </header>
+
+        <section class="panel selection-panel">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">SELECT EQUIPMENT</span>
+                    <h2>Choose Your Armour</h2>
+                </div>
+                <span class="section-number">01</span>
+            </div>
+
+            <div class="selectors">
+                <div class="select-card">
+                    <label for="buildA">BUILD A</label>
+                    <select id="buildA">
+                        <option value="">Loading armour...</option>
+                    </select>
+                </div>
+
+                <div class="versus">VS</div>
+
+                <div class="select-card">
+                    <label for="buildB">BUILD B</label>
+                    <select id="buildB">
+                        <option value="">Loading armour...</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="compareButton" class="compare-button" disabled>
+                COMPARE ARMOUR
+                <span>→</span>
+            </button>
+
+            <p id="message" class="message" aria-live="polite">
+                Connecting to armour database...
+            </p>
+        </section>
+
+        <section class="panel chart-panel">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">VISUAL ANALYSIS</span>
+                    <h2>Stat Comparison</h2>
+                    <p class="section-description">
+                        Compare six attributes through a radar chart.
+                    </p>
+                </div>
+                <span class="section-number">02</span>
+            </div>
+
+            <div class="chart-box">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+        </section>
+
+        <section class="panel table-panel">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">ATTRIBUTE BREAKDOWN</span>
+                    <h2>Detailed Comparison</h2>
+                    <p class="section-description">
+                        Positive difference means Build A has the higher stat.
+                    </p>
+                </div>
+                <span class="section-number">03</span>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ATTRIBUTE</th>
+                            <th id="headingA">BUILD A</th>
+                            <th id="headingB">BUILD B</th>
+                            <th>DIFFERENCE (A − B)</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="comparisonRows">
+                        <tr>
+                            <td colspan="4" class="empty-row">
+                                Load armour data to begin comparison.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            GOD OF WAR RAGNARÖK
+            <span>ARMOUR DATA ANALYSIS SYSTEM</span>
+        </footer>
+
+    </main>
+
+</body>
+</html>
